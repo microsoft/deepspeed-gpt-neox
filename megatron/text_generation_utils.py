@@ -28,6 +28,8 @@ import torch.nn.functional as F
 from megatron import print_rank_0
 from megatron import mpu
 from megatron.utils import get_ltor_masks_and_position_ids, is_mp_rank_0
+from megatron.model.transformer import ParallelTransformerLayerPipe
+from deepspeed.ops.transformer import DeepSpeedTransformerInference
 
 
 def get_batch(neox_args, context_tokens: torch.Tensor):
@@ -382,6 +384,14 @@ def stream_tokens(
                 break
 
 
+def _clear_cache(module):
+    for name, child in module.named_children():
+        if isinstance(child, (ParallelTransformerLayerPipe, DeepSpeedTransformerInference)):
+            child.layer_past = None
+        else:
+            _clear_cache(child)
+
+
 def generate_samples_from_prompt(
     neox_args,
     model,
@@ -435,7 +445,10 @@ def generate_samples_from_prompt(
     # generate completions
     generated_texts = []
     while True:
-        model.module.clear_cache()  # clear kv cache between batches
+        if hasattr(model.module, "clear_cache"):
+            model.module.clear_cache()  # clear kv cache between batches
+        else:
+            _clear_cache(model.module)
 
         start_time = time.time()
         # Tokenize text, and check whether we should terminate process

@@ -236,7 +236,7 @@ def get_model(neox_args, use_cache=False):
     model = GPT2ModelPipe(
         neox_args=neox_args,
         num_tokentypes=0,
-        parallel_output=True,
+        parallel_output=neox_args.is_pipe_parallel,
         topology=mpu.get_topology(),
         use_cache=use_cache,
     )
@@ -263,7 +263,10 @@ def get_model(neox_args, use_cache=False):
 
     if not neox_args.is_pipe_parallel:
         # Export PipeParallel model to nn.Sequential model to avoid the overhead of deepspeed's pipe parallel training
+        model.cpu()
         model = model.to_sequential()
+        #XXX: send to local rank, not global rank
+        model.to(f"cuda:{torch.distributed.get_rank()}")
 
     if neox_args.deepspeed:
         # DeepSpeed handles CUDA, FP16, and DDP components.

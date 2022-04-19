@@ -23,6 +23,7 @@ import shutil
 import random
 import sys
 import numpy as np
+import deepspeed
 
 import torch
 from glob import glob
@@ -31,6 +32,7 @@ from megatron import mpu
 from megatron import print_rank_0
 from megatron.utils import natural_sort
 from megatron.text_generation_utils import get_batch, forward_model
+from megatron.model.utils import SequentialWrapper
 from pathlib import Path
 from pprint import pformat
 
@@ -216,6 +218,49 @@ def save_checkpoint(neox_args, iteration, model, optimizer, lr_scheduler):
     torch.distributed.barrier()
 
 
+def _all_ckpt_layer_paths(ckpt_dir):
+    """Get all pipeline module layer ckpt files. """
+    mp_rank = mpu.get_model_parallel_rank()
+    layer_ckpt_path = os.path.join(ckpt_dir, f'layer_*-model_{mp_rank:02d}-model_states.pt')
+    ckpt_files = glob(layer_ckpt_path)
+    ckpt_files.sort()
+    return ckpt_files
+
+
+def _get_pp_ckpt_layer_num(ckpt_path):
+    p = re.compile(r'layer_(\d+)-model')
+    matches = p.findall(ckpt_path)
+    assert len(matches) == 1, "unable to find layer number in checkpoint path: {ckpt_path}"
+    return matches[0]
+
+
+def convert_and_load_pp_ckpt(model, load_dir, tag):
+    if not os.path.isdir(load_dir):
+        return None, None
+
+    if tag is None:
+        latest_path = os.path.join(load_dir, "latest")
+        assert os.path.isfile(latest_path), "unable to find tag file"
+        with open(latest_path, "r") as fd:
+            tag = fd.read().strip()
+
+    mp_rank = mpu.get_model_parallel_rank()
+    ckpt_path = os.path.join(load_dir, tag)
+    pp_ckpt_layer_paths = _all_ckpt_layer_paths(ckpt_path)
+    for ckpt_layer_path in pp_ckpt_layer_paths:
+        layer_num = _get_pp_ckpt_layer_num(ckpt_layer_path)
+        layer_sd = torch.load(ckpt_layer_path)
+        layer_sd_updated = {}
+        for k,v in layer_sd.items():
+            layer_sd_updated[f"sequential.{int(layer_num)}.{k}"] = v
+        model.load_state_dict(layer_sd_updated, strict=False)
+
+    # fetch non-module state dict
+    state_dict_path = os.path.join(ckpt_path, f"mp_rank_{mp_rank:02d}_model_states.pt")
+    state_dict = torch.load(state_dict_path)
+    return ckpt_path, state_dict
+
+
 def load_checkpoint(
     neox_args, model, optimizer, lr_scheduler, inference=False, iteration=None
 ):
@@ -230,12 +275,26 @@ def load_checkpoint(
             tag = f"global_step{iteration}"
         else:
             tag = None
-        checkpoint_name, state_dict = model.load_checkpoint(
-            neox_args.load,
-            load_optimizer_states=load_optim_and_scheduler,
-            load_lr_scheduler_states=load_optim_and_scheduler,
-            tag=tag,
-        )
+
+        if isinstance(model.module, deepspeed.pipe.PipelineModule):
+            print("Loading a PP checkpoint into a PP runtime")
+            assert neox_args.is_pipe_parallel
+            checkpoint_name, state_dict = model.load_checkpoint(
+                neox_args.load,
+                load_optimizer_states=load_optim_and_scheduler,
+                load_lr_scheduler_states=load_optim_and_scheduler,
+                tag=tag
+            )
+        elif isinstance(model.module, SequentialWrapper):
+            assert not neox_args.is_pipe_parallel
+            print("Converting PP checkpoint to run in non-PP runtime")
+            checkpoint_name, state_dict = convert_and_load_pp_ckpt(
+                model=model.module,
+                load_dir=neox_args.load,
+                tag=tag
+            )
+        else:
+            raise ValueError(f"Unexpected model type of {type(model.module)}")
 
         if checkpoint_name is None:
             # if an iteration is specified, we want to raise an error here rather than

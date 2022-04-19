@@ -45,7 +45,8 @@ from typing import Union, List
 
 
 def gpt2_attention_mask_func(attention_scores, ltor_mask):
-    attention_scores.masked_fill_(ltor_mask, -10000.0)
+    #XXX: only disable if modle is nn.Sequential and not pipeline-parallelism
+    #attention_scores.masked_fill_(ltor_mask, -10000.0)
     return attention_scores
 
 
