@@ -1,0 +1,5 @@
+shortuuid
+sentencepiece
+git+https://github.com/EleutherAI/lm-evaluation-harness.git@dc937d4b70af819c5695e09d94e59e4cdb1e40ad#egg=lm_eval
+wandb==0.10.28
+deepspeed
