@@ -44,7 +44,7 @@ def main():
     config = {
         "load": "../20B_checkpoints",
         "vocab_file": "../20B_checkpoints/20B_tokenizer.json",
-        "model_parallel_size": 2,
+        "model_parallel_size": 2
     }
 
     parser = argparse.ArgumentParser()
@@ -55,6 +55,15 @@ def main():
     print(f'deepspeed enabled={args.deepspeed}, running {args.trials} queries')
 
     pipeline = NeoXPipeline(config)
+
+    if args.deepspeed:
+        deepspeed.init_inference(
+                model=pipeline.model,
+                mp_size=2,
+                mpu=mpu,
+                dtype=torch.half,
+                replace_with_kernel_inject=True
+        )
 
     maximum_tokens = 50
     trials = args.trials

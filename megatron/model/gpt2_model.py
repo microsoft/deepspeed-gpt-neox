@@ -20,6 +20,7 @@
 import math
 import torch
 import torch.nn as nn
+import deepspeed
 from collections import defaultdict
 
 from functools import partial
@@ -72,6 +73,8 @@ def cross_entropy(output, labels, _fp16=False):
 
 
 def _pre_transformer_block(args):
+    if deepspeed.inference.engine.DS_INFERENCE_ENABLED:
+        return args
     # data format change for hidden_states to avoid explicit tranposes : [b s h] --> [s b h]
     assert len(args) == 2, "Incorrect number of arguments to _pre_transformer_block"
     fn = lambda _args: (_args[0].transpose(0, 1).contiguous(), *_args[1:])
@@ -79,6 +82,8 @@ def _pre_transformer_block(args):
 
 
 def _post_transformer_block(args):
+    if deepspeed.inference.engine.DS_INFERENCE_ENABLED:
+        return (args[0])
     # from (hidden_states, attention_mask)
     # to (hidden_states.T)
     assert len(args) == 2, "Incorrect number of arguments to _post_transformer_block"

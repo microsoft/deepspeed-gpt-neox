@@ -194,6 +194,7 @@ class ParallelSelfAttention(nn.Module):
     ):
         super().__init__()
 
+        self.num_attention_heads = neox_args.num_attention_heads
         self.fp16 = neox_args.precision == "fp16"
         self.bf16 = neox_args.precision == "bfloat16"
         self.attention_mask_func = attention_mask_func
