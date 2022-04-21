@@ -67,6 +67,12 @@ class NeoXArgsParallelism(NeoXArgsTemplate):
     according to pipeline parallel size.
     """
 
+    checkpoint_model_parallel_size: int = 0
+    """
+    Optional argument, set the model parallel (MP) size used by a checkpoint during training. This is used in
+    inference scenarios where the user may want to change MP size for inference.
+    """
+
 
 @dataclass
 class NeoXArgsModel(NeoXArgsTemplate):

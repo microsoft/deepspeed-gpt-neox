@@ -7,7 +7,11 @@ from megatron.text_generation_utils import generate_samples_from_prompt
 
 
 neox20_base_config = {
-    "train_batch_size": 4,
+    "checkpoint_model_parallel_size": 2,
+    "is_pipe_parallel": True,
+    "pipe_parallel_size": 1,
+    "train_micro_batch_size_per_gpu": 1,
+    "gradient_accumulation_steps": 1,
     "fp16": {"enabled": True},
     "num_layers": 44,
     "hidden_size": 6144,

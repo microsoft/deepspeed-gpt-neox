@@ -47,6 +47,8 @@ def check_checkpoint_args(neox_args, checkpoint_args):
         error_message = "{} value from checkpoint ({}) is not equal to the currently set argument value ({}).".format(
             checkpoint_arg_name, checkpoint_arg_value, args_value
         )
+        if "model_parallel_size" == checkpoint_arg_name and neox_args.checkpoint_model_parallel_size > 0:
+            args_value = neox_args.checkpoint_model_parallel_size
         assert checkpoint_arg_value == args_value, error_message
 
 

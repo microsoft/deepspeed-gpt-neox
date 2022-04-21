@@ -68,7 +68,12 @@ def _vocab_size_with_padding(orig_vocab_size, args):
     still having GPU friendly size."""
 
     after = orig_vocab_size
-    multiple = args.make_vocab_size_divisible_by * args.model_parallel_size
+
+    mp_size = args.model_parallel_size
+    if args.checkpoint_model_parallel_size > 0:
+        mp_size = args.checkpoint_model_parallel_size
+
+    multiple = args.make_vocab_size_divisible_by * mp_size
     while (after % multiple) != 0:
         after += 1
     if args.rank == 0:

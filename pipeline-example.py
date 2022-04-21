@@ -42,9 +42,9 @@ def print_latency(latency_set, title=""):
 
 def main():
     config = {
-        "load": "../20B_checkpoints",
-        "vocab_file": "../20B_checkpoints/20B_tokenizer.json",
-        "model_parallel_size": 2
+        "load": "/data/users/reyazda/gpt-neox20B",
+        "vocab_file": "/data/users/reyazda/gpt-neox20B/20B_tokenizer.json",
+        "model_parallel_size": 4
     }
 
     parser = argparse.ArgumentParser()
@@ -59,7 +59,7 @@ def main():
     if args.deepspeed:
         deepspeed.init_inference(
                 model=pipeline.model,
-                mp_size=2,
+                mp_size=config["model_parallel_size"],
                 mpu=mpu,
                 dtype=torch.half,
                 replace_with_kernel_inject=True
