@@ -63,7 +63,8 @@ def main():
                 mp_size=config["model_parallel_size"],
                 mpu=mpu,
                 dtype=torch.half,
-                replace_with_kernel_inject=True
+                replace_with_kernel_inject=True,
+                training_mp_size=2,
         )
 
     maximum_tokens = 50
