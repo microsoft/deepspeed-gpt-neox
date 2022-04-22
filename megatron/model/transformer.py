@@ -538,6 +538,10 @@ class ParallelTransformerLayer(nn.Module):
 
         norm, eps = get_norm(neox_args)
 
+        self.bias_mp_scale = 1
+        if neox_args.checkpoint_model_parallel_size > 0:
+            self.bias_mp_scale = neox_args.model_parallel_size / neox_args.checkpoint_model_parallel_size
+
         # Layernorm on the input data.
         self.input_layernorm = norm(neox_args.hidden_size, eps=eps)
         self.use_cache = use_cache
@@ -608,7 +612,7 @@ class ParallelTransformerLayer(nn.Module):
             with torch.enable_grad():
                 attention_output = bias_dropout_fn(
                     attention_output,
-                    bias=attention_bias.expand_as(attention_output),
+                    bias=attention_bias.expand_as(attention_output) / self.bias_mp_scale,
                     residual=None,
                     prob=self.hidden_dropout,
                 )
@@ -618,7 +622,7 @@ class ParallelTransformerLayer(nn.Module):
             with torch.enable_grad():
                 output = bias_dropout_fn(
                     mlp_output,
-                    bias=mlp_bias.expand_as(mlp_output),
+                    bias=mlp_bias.expand_as(mlp_output) / self.bias_mp_scale,
                     residual=attention_output,
                     prob=self.hidden_dropout,
                 )
