@@ -58,6 +58,7 @@ def main():
 
     if args.deepspeed:
         deepspeed.init_inference(
+                args=pipeline.neox_args,
                 model=pipeline.model,
                 mp_size=config["model_parallel_size"],
                 mpu=mpu,
