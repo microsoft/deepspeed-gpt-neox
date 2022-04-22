@@ -45,7 +45,7 @@ setup(
     version=version_str,
     description='gpt-neox',
     install_requires=install_requires,
-    packages=find_packages(exclude=["tools", "tests", "requirements", "eval_tasks"]),
+    packages=find_packages(exclude=["tools", "tests", "requirements"]),
     classifiers=[
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

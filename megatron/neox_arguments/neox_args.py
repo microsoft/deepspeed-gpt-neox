@@ -917,6 +917,11 @@ class NeoXArgsTraining(NeoXArgsTemplate):
     Whether to calculate character level perplexity as well as token level perplexity. (may incur a time cost)
     """
 
+    disable_data_helper: bool = False
+    """
+    Disable data helper c++ compilation
+    """
+
 
 @dataclass
 class NeoXArgsTextgen(NeoXArgsTemplate):

@@ -75,7 +75,7 @@ def initialize_megatron(neox_args, allow_no_cuda=False):
         finish_mpu_init()
 
         # Compile dataset C++ code.
-        if neox_args.local_rank == 0:
+        if neox_args.local_rank == 0 and not neox_args.disable_data_helper:
             from megatron.data.data_utils import compile_helper
 
             compile_helper()

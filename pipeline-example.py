@@ -42,8 +42,8 @@ def print_latency(latency_set, title=""):
 
 def main():
     config = {
-        "load": "/data/users/reyazda/gpt-neox20B",
-        "vocab_file": "/data/users/reyazda/gpt-neox20B/20B_tokenizer.json",
+        "load": "/data/20b",
+        "vocab_file": "/data/20b/20B_tokenizer.json",
         "model_parallel_size": 4
     }
 
@@ -75,7 +75,7 @@ def main():
     torch.cuda.synchronize()
     start = time.time()
     for i in range(trials):
-        response = pipeline(query, maximum_tokens=maximum_tokens)
+        response = pipeline(query, min_length=maximum_tokens)
         if torch.distributed.get_rank() == 0:
             responses.append(response[0]['text'])
     torch.cuda.synchronize()

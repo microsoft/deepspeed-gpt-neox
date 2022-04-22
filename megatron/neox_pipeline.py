@@ -11,6 +11,7 @@ neox20_base_config = {
     "is_pipe_parallel": True,
     "pipe_parallel_size": 1,
     "train_micro_batch_size_per_gpu": 1,
+    "disable_data_helper": True,
     "gradient_accumulation_steps": 1,
     "fp16": {"enabled": True},
     "num_layers": 44,
@@ -47,12 +48,12 @@ class NeoXPipeline():
         self.megatron_config = megatron_config
         self.latencies = []
 
-    def _call(self, request, maximum_tokens=50):
+    def _call(self, request, do_sample=True, min_length=50):
         generated_texts = generate_samples_from_prompt(
             neox_args=self.neox_args,
             model=self.model,
             text=request,
-            maximum_tokens=maximum_tokens
+            maximum_tokens=min_length
         )
         if torch.distributed.get_rank() == 0:
             self.latencies.append(generated_texts[0]['duration_seconds'])
