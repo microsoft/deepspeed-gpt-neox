@@ -64,7 +64,7 @@ def _initialize_affine_weight_cpu(
 
     Build the master weight on all processes and scatter
     the relevant chunk."""
-
+    return
     weight.model_parallel = True
     weight.partition_dim = partition_dim
     weight.partition_stride = stride
