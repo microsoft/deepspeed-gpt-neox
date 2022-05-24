@@ -1,6 +1,8 @@
 import copy
 import torch
 
+from deepspeed.runtime.pipe.engine import PipelineEngine
+
 from megatron import mpu
 from megatron.utils import print_rank_0, setup_for_inference_or_eval
 from megatron.text_generation_utils import generate_samples_from_prompt
@@ -49,6 +51,8 @@ class NeoXPipeline():
         self.latencies = []
 
     def _call(self, request, do_sample=True, min_length=50):
+        if not isinstance(self.model, PipelineEngine):
+            self.model = self.model.module
         generated_texts = generate_samples_from_prompt(
             neox_args=self.neox_args,
             model=self.model,
