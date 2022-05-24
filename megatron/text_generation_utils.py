@@ -430,6 +430,7 @@ def generate_samples_from_prompt(
         - 'duration_seconds': duration of the generation in seconds
 
     """
+    torch.cuda.set_device(f'cuda:{os.environ["LOCAL_RANK"]}')
     eos_token_id = eos_token_id or neox_args.tokenizer.eod
 
     # type check
