@@ -253,7 +253,7 @@ class NeoXArgsModel(NeoXArgsTemplate):
     Scale Q * K^T by 1 / layer-number. If this flag is set, then it will automatically set attention-softmax-in-fp32 to true
     """
 
-    use_cpu_initialization: bool = False
+    use_cpu_initialization: bool = True
     """
     If set, affine parallel weights initialization uses CPU
     """

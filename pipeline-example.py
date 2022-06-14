@@ -42,9 +42,9 @@ def print_latency(latency_set, title=""):
 
 def main():
     config = {
-        "load": "/data/20b",
-        "vocab_file": "/data/20b/20B_tokenizer.json",
-        "model_parallel_size": 4
+        "load": "/data/users/reyazda/gpt-neox20B/",
+        "vocab_file": "/data/users/reyazda/gpt-neox20B/20B_tokenizer.json",
+        "model_parallel_size": 1
     }
 
     parser = argparse.ArgumentParser()
@@ -62,7 +62,7 @@ def main():
                 model=pipeline.model,
                 mp_size=config["model_parallel_size"],
                 mpu=mpu,
-                dtype=torch.half,
+                dtype=torch.int8,
                 replace_with_kernel_inject=True,
                 training_mp_size=2,
         )
